@@ -1,8 +1,9 @@
 # Little Utils
 
-Little Utils is a small collection of minimalistic [VCV
-Rack](https://vcvrack.com/) modules, with a focus on usefulness and simplicity
-instead of faithful analog emulation. Here's all of them:
+Little Utils is a small collection of minimalistic modules for the [VCV
+Rack](https://vcvrack.com/) virtual modular synthesizer, with a focus on
+usefulness and simplicity instead of faithful analog emulation. Here's all of
+them:
 
 ![all modules](screenshots/all_modules.png)
 
