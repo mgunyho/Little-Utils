@@ -70,7 +70,7 @@ disconnected, both A×B and A/B will output A.
 ## Teleport In/Out
 Create wireless links between a pair of inputs/outputs. Click on the label of an
 input and type any 4-letter case-sensitive label, and click on the label of an
-output to select a valid label from the list of available inputs.
+output to list the available inputs and select one.
 
 ![teleport](screenshots/teleport.png)
 
