@@ -38,9 +38,15 @@ trigger when the pulse finishes.
 
 You can chain several of these together by wiring the FIN output to the TRG IN
 of another Pulse Generator. This way, you can create interesting drum patterns,
-or even make a really clunky PWM oscillator by creating a loop!  When the
-trigger is polyphonic, the output will be polyphonic with one gate signal for
-each trigger. Note, however, that the gate duration is the same for all of them.
+or even make a really clunky PWM oscillator by creating a loop!
+
+By default, sending a trigger to the input while the pulse is on resets the
+timer and starts the pulse from the beginning. You can change this behavior
+from the right-click menu.
+
+When the trigger is polyphonic, the output will be polyphonic with one gate
+signal for each trigger. Note, however, that the gate duration is the same for
+all of them.
 
 
 ## Bias/Semitone

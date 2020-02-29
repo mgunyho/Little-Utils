@@ -71,6 +71,7 @@ struct PulseGenModule : Module {
 	float gate_duration;
 	bool realtimeUpdate = true; // whether to display gate_duration or gate_base_duration
 	float cv_scale = 0.f; // cv_scale = +- 1 -> 10V CV changes duration by +-10s
+	bool allowRetrigger = true; // whether to allow the pulse to be retriggered if it is already outputting
 
 	PulseGenModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -90,13 +91,18 @@ struct PulseGenModule : Module {
 	json_t *dataToJson() override {
 		json_t *root = json_object();
 		json_object_set_new(root, "realtimeUpdate", json_boolean(realtimeUpdate));
+		json_object_set_new(root, "allowRetrigger", json_boolean(allowRetrigger));
 		return root;
 	}
 
 	void dataFromJson(json_t *root) override {
 		json_t *realtimeUpdate_J = json_object_get(root, "realtimeUpdate");
+		json_t *allowRetrigger_J = json_object_get(root, "allowRetrigger");
 		if(realtimeUpdate_J) {
 			realtimeUpdate = json_boolean_value(realtimeUpdate_J);
+		}
+		if(allowRetrigger_J) {
+			allowRetrigger = json_boolean_value(allowRetrigger_J);
 		}
 	}
 
@@ -128,6 +134,7 @@ void PulseGenModule::process(const ProcessArgs &args) {
 
 		gate_base_duration = powf(10.0f, exponent);
 	}
+	//TODO: make duration polyphonic? how to display it?
 	gate_duration = clamp(gate_base_duration + cv_voltage * cv_scale, 0.f, 10.f);
 
 	for(int c = 0; c < channels; c++) {
@@ -136,7 +143,9 @@ void PulseGenModule::process(const ProcessArgs &args) {
 					0.1f, 2.f, 0.f, 1.f));
 
 		if(triggered && gate_duration > 0.f) {
-			gateGenerator[c].trigger(gate_duration);
+			if(gateGenerator[c].finished || allowRetrigger) {
+				gateGenerator[c].trigger(gate_duration);
+			}
 		}
 
 		// update trigger duration even in the middle of a trigger
@@ -255,11 +264,14 @@ struct CustomTrimpot : Trimpot {
 	}
 };
 
-struct PulseGeneratorToggleRealtimeMenuItem : MenuItem {
-	PulseGenModule *module;
-	PulseGeneratorToggleRealtimeMenuItem(): MenuItem() {}
+// generic menu item that toggles a boolean attribute provided in the constructor
+struct PulseGeneratorToggleMenuItem: MenuItem {
+	bool& attr;
+	PulseGeneratorToggleMenuItem(bool& pAttr) : MenuItem(), attr(pAttr) {
+		rightText = CHECKMARK(attr);
+	};
 	void onAction(const event::Action &e) override {
-		module->realtimeUpdate = !module->realtimeUpdate;
+		attr = !attr;
 	}
 };
 
@@ -301,11 +313,18 @@ struct PulseGeneratorWidget : ModuleWidget {
 
 		menu->addChild(new MenuLabel());
 
-		auto *toggleItem = new PulseGeneratorToggleRealtimeMenuItem();
-		toggleItem->text = "Update display in real time";
-		toggleItem->rightText = CHECKMARK(this->module->realtimeUpdate);
-		toggleItem->module = this->module;
-		menu->addChild(toggleItem);
+		{
+			auto *toggleItem = new PulseGeneratorToggleMenuItem(this->module->realtimeUpdate);
+			toggleItem->text = "Update display in real time";
+			menu->addChild(toggleItem);
+		}
+		{
+			auto *toggleItem = new PulseGeneratorToggleMenuItem(this->module->allowRetrigger);
+			toggleItem->text = "Allow retrigger while gate is on";
+			//toggleItem->rightText = CHECKMARK(toggleItem->attr);
+			menu->addChild(toggleItem);
+		}
+
 	}
 
 };
