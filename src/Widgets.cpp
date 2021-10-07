@@ -1,6 +1,6 @@
 #include "Widgets.hpp"
-#include "window.hpp" // WINDOW_MOD_CTRL
-#include <GLFW/glfw3.h> // key codes
+//#include "window.hpp" // WINDOW_MOD_CTRL
+//#include <GLFW/glfw3.h> // key codes
 
 void TextBox::draw(const DrawArgs &args) {
 	// based on LedDisplayChoice::draw() in Rack/src/app/LedDisplay.cpp
