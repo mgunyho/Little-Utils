@@ -1,6 +1,4 @@
 #include "Widgets.hpp"
-//#include "window.hpp" // WINDOW_MOD_CTRL
-//#include <GLFW/glfw3.h> // key codes
 
 void TextBox::draw(const DrawArgs &args) {
 	// based on LedDisplayChoice::draw() in Rack/src/app/LedDisplay.cpp
@@ -11,6 +9,8 @@ void TextBox::draw(const DrawArgs &args) {
 	nvgRoundedRect(vg, 0, 0, box.size.x, box.size.y, 3.0);
 	nvgFillColor(vg, backgroundColor);
 	nvgFill(vg);
+
+	font = APP->window->loadFont(asset::plugin(pluginInstance, fontPath));
 
 	if (font->handle >= 0) {
 
