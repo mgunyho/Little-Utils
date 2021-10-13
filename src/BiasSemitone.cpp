@@ -83,7 +83,7 @@ struct Bias_Semitone : Module {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		for(int i = 0; i < N_KNOBS; i++) {
 			//TODO: see https://community.vcvrack.com/t/can-we-add-precision-to-createparam-labeling/3822/5
-			configParam(Bias_Semitone::BIAS_1_PARAM + i, -1.f, 1.f, 0.f, stringf("Bias %d", i + 1));
+			configParam(Bias_Semitone::BIAS_1_PARAM + i, -1.f, 1.f, 0.f, string::f("Bias %d", i + 1));
 		}
 
 		configParam(Bias_Semitone::MODE_PARAM, 0.f, 1.f, 1.f, "Mode");
@@ -178,16 +178,16 @@ struct Bias_SemitoneWidget : ModuleWidget {
 				std::string s;
 				if(module->params[Bias_Semitone::MODE_PARAM].getValue() < 0.5f) {
 					int st = bias * MAX_SEMITONES;
-					s = stringf("%+3dst", st);
+					s = string::f("%+3dst", st);
 				} else {
-					s = stringf(fabs(bias) < 0.995f ? "%+.1fV" : "%+.0f.V", bias * 10.f);
+					s = string::f(fabs(bias) < 0.995f ? "%+.1fV" : "%+.0f.V", bias * 10.f);
 				}
 				std::replace(s.begin(), s.end(), '0', 'O');
 				displays[i]->setText(s);
 			}
 		} else {
 			for(int i = 0; i < N_KNOBS; i++) {
-				displays[i]->setText(stringf("+O.OV"));
+				displays[i]->setText(string::f("+O.OV"));
 			}
 		}
 	}

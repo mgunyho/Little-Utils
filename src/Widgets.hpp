@@ -5,6 +5,7 @@ struct TextBox : TransparentWidget {
 	// numbers look okay.
 	// based on LedDisplayChoice
 	std::string text;
+	std::string fontPath = "res/fonts/RobotoMono-Bold.ttf";
 	std::shared_ptr<Font> font;
 	float font_size;
 	float letter_spacing;
@@ -14,7 +15,6 @@ struct TextBox : TransparentWidget {
 	NVGcolor backgroundColor;
 
 	TextBox() {
-		font = APP->window->loadFont(asset::plugin(pluginInstance, "res/fonts/RobotoMono-Bold.ttf")); //TODO: fix paths...
 		defaultTextColor = nvgRGB(0x23, 0x23, 0x23);
 		textColor = defaultTextColor;
 		backgroundColor = nvgRGB(0xc8, 0xc8, 0xc8);

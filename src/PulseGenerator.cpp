@@ -190,16 +190,16 @@ struct MsDisplayWidget : TextBox {
 	}
 
 	void updateDisplayValue(float v) {
-		// only update/do stringf if value is changed
+		// only update/do string::f if value is changed
 		if(v != previous_displayed_value) {
 			std::string s;
 			previous_displayed_value = v;
 			if(v <= 0.0995) {
 				v *= 1e3f;
-				s = stringf("%#.2g", v < 1.f ? 0.f : v);
+				s = string::f("%#.2g", v < 1.f ? 0.f : v);
 				msLabelStatus = false;
 			} else {
-				s = stringf("%#.2g", v);
+				s = string::f("%#.2g", v);
 				msLabelStatus = true;
 				if(s.at(0) == '0') s.erase(0, 1);
 			}
