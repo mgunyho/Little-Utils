@@ -119,7 +119,7 @@ struct ToggleLEDButton : SVGSwitch {
 	NVGcolor hoverColor;
 
 	ToggleLEDButton() {
-		addFrame(APP->window->loadSvg(asset::system("res/ComponentLibrary/LEDButton.svg")));
+		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/ComponentLibrary/LEDButton.svg")));
 	}
 };
 
