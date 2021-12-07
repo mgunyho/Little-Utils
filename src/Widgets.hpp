@@ -126,9 +126,9 @@ struct ToggleLEDButton : SVGSwitch {
 // Same as CKSSThree but horizontal
 struct CKSSThreeH : SVGSwitch {
 	CKSSThreeH() {
-		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "./res/CKSSThreeH_0.svg")));
-		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "./res/CKSSThreeH_1.svg")));
-		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "./res/CKSSThreeH_2.svg")));
+		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/CKSSThreeH_0.svg")));
+		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/CKSSThreeH_1.svg")));
+		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/CKSSThreeH_2.svg")));
 	};
 
 };
