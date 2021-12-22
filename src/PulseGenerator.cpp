@@ -75,14 +75,21 @@ struct PulseGenModule : Module {
 
 	PulseGenModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+
 		//TODO: consider overriding ParamQuantity::getDisplayValueString
 		configParam(PulseGenModule::GATE_LENGTH_PARAM, 0.f, 10.f,
 					// 0.5s in log scale
 					//rescale(-0.30103f, MIN_EXPONENT, MAX_EXPONENT, 0.f,10.f)
 					5.f // 0.1s in log mode, 5s in lin mode
 					, "Pulse duration");
-		configParam(PulseGenModule::LIN_LOG_MODE_PARAM, 0.f, 1.f, 1.f, "Mode");
+		configSwitch(PulseGenModule::LIN_LOG_MODE_PARAM, 0.f, 1.f, 1.f, "Duration mod mode", {"Linear", "Logarithmic"});
 		configParam(PulseGenModule::CV_AMT_PARAM, -1.f, 1.f, 0.f, "CV amount");
+
+		configInput(TRIG_INPUT, "Trigger");
+		configInput(GATE_LENGTH_INPUT, "Gate length CV modulation");
+		configOutput(GATE_OUTPUT, "Gate");
+		configOutput(FINISH_OUTPUT, "Finish trigger");
+
 		gate_duration = gate_base_duration;
 	}
 
