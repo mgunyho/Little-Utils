@@ -38,6 +38,12 @@ struct ButtonModule : Module {
 	ButtonModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		configParam(ButtonModule::BUTTON_PARAM, 0.0f, 1.0f, 0.0f, "Button");
+		configInput(TRIG_INPUT, "Trigger");
+		configOutput(TRIG_OUTPUT, "Trigger");
+		configOutput(GATE_OUTPUT, "Gate");
+		configOutput(TOGGLE_OUTPUT, "Toggle");
+		configOutput(CONST_OUTPUT, "Constant");
+
 		onReset();
 	}
 
