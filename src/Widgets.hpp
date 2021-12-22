@@ -113,7 +113,7 @@ struct EditableTextBox : HoverableTextBox, TextField {
 
 };
 
-struct ToggleLEDButton : SVGSwitch {
+struct ToggleLEDButton : SvgSwitch {
 	BNDwidgetState state = BND_DEFAULT;
 	NVGcolor defaultColor;
 	NVGcolor hoverColor;
@@ -124,7 +124,7 @@ struct ToggleLEDButton : SVGSwitch {
 };
 
 // Same as CKSSThree but horizontal
-struct CKSSThreeH : SVGSwitch {
+struct CKSSThreeH : SvgSwitch {
 	CKSSThreeH() {
 		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/CKSSThreeH_0.svg")));
 		addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/CKSSThreeH_1.svg")));
