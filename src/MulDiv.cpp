@@ -31,10 +31,15 @@ struct MulDiv : Module {
 
 	MulDiv() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(MulDiv::A_SCALE_PARAM,   0.f, 2.f, 0.f, "A scale");
-		configParam(MulDiv::B_SCALE_PARAM,   0.f, 2.f, 0.f, "B scale");
-		configParam(MulDiv::OUT_SCALE_PARAM, 0.f, 2.f, 0.f, "Output scale");
-		configParam(MulDiv::CLIP_ENABLE_PARAM, 0.f, 1.f, 0.f, "Clip to +/-10V");
+		configInput(A_INPUT, "A");
+		configInput(B_INPUT, "B");
+		configOutput(MUL_OUTPUT, "A times B");
+		configOutput(DIV_OUTPUT, "A divided by B");
+		configSwitch(MulDiv::A_SCALE_PARAM,   0.f, 2.f, 0.f, "A input scale", {"No scaling", "Divide by 5", "Divide by 10"});
+		configSwitch(MulDiv::B_SCALE_PARAM,   0.f, 2.f, 0.f, "B input scale", {"No scaling", "Divide by 5", "Divide by 10"});
+		configSwitch(MulDiv::OUT_SCALE_PARAM, 0.f, 2.f, 0.f, "Output scale", {"No scaling", "Multiply by 5", "Multiply by 10"});
+		configSwitch(MulDiv::CLIP_ENABLE_PARAM, 0.f, 1.f, 0.f, "Clip output to +/-10V", {"Off", "On"});
+
 		for(int i = 0; i < MAX_POLY_CHANNELS; i++) {
 			valid_div_value[i] = 0.f;
 		}
