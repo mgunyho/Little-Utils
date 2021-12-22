@@ -96,12 +96,12 @@ struct MulDivWidget : ModuleWidget {
 
 		addInput(createInputCentered<PJ301MPort>(Vec(22.5,  46), module, MulDiv::A_INPUT));
 
-		addChild(createParam<CKSSThreeH>(Vec(7.5,  63), module, MulDiv::A_SCALE_PARAM));
+		addChild(createParam<CKSSThreeHorizontal>(Vec(7.5,  63), module, MulDiv::A_SCALE_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(Vec(22.5, 119), module, MulDiv::B_INPUT));
 
-		addChild(createParam<CKSSThreeH>(Vec(7.5, 136), module, MulDiv::B_SCALE_PARAM));
-		addChild(createParam<CKSSThreeH>(Vec(7.5, 177), module, MulDiv::OUT_SCALE_PARAM));
+		addChild(createParam<CKSSThreeHorizontal>(Vec(7.5, 136), module, MulDiv::B_SCALE_PARAM));
+		addChild(createParam<CKSSThreeHorizontal>(Vec(7.5, 177), module, MulDiv::OUT_SCALE_PARAM));
 
 		addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, 236), module, MulDiv::MUL_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, 286), module, MulDiv::DIV_OUTPUT));
