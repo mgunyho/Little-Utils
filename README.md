@@ -7,10 +7,10 @@ them:
 
 ![all modules](screenshots/all_modules.png)
 
-Most of these modules were born out of me yelling "How the hell is this not in
-Fundamental?!". Much of the functionality is available in other plugin packs,
-but I didn't want to download 30 modules just to add two numbers together. I
-also tried to make them look nice.
+These modules are small utilities that I would have liked to see in the
+Fundamental plugin when starting out with Rack. Much of the functionality is
+available in other plugin packs, but I didn't want to download 30 modules just
+to add two numbers together. I also tried to make them look nice.
 
 All modules except for Button have polyphonic support.
 
