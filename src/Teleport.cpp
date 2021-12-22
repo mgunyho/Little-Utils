@@ -53,6 +53,9 @@ struct TeleportInModule : Teleport {
 
 	TeleportInModule() : Teleport(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
 		assert(NUM_INPUTS == NUM_TELEPORT_INPUTS);
+		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+			configInput(i, string::f("Port %d", i + 1));
+		}
 		label = getLabel();
 		addSource(this);
 	}
@@ -136,6 +139,9 @@ struct TeleportOutModule : Teleport {
 
 	TeleportOutModule() : Teleport(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
 		assert(NUM_OUTPUTS == NUM_TELEPORT_INPUTS);
+		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+			configOutput(i, string::f("Port %d", i + 1));
+		}
 		if(sources.size() > 0) {
 			if(sourceExists(lastInsertedKey)) {
 				label = lastInsertedKey;

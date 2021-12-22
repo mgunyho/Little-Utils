@@ -10,7 +10,7 @@ void TextBox::draw(const DrawArgs &args) {
 	nvgFillColor(vg, backgroundColor);
 	nvgFill(vg);
 
-	font = APP->window->loadFont(asset::plugin(pluginInstance, fontPath));
+	std::shared_ptr<Font> font = APP->window->loadFont(asset::plugin(pluginInstance, fontPath));
 
 	if (font->handle >= 0) {
 

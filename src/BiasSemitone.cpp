@@ -83,10 +83,15 @@ struct Bias_Semitone : Module {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		for(int i = 0; i < N_KNOBS; i++) {
 			//TODO: see https://community.vcvrack.com/t/can-we-add-precision-to-createparam-labeling/3822/5
-			configParam(Bias_Semitone::BIAS_1_PARAM + i, -1.f, 1.f, 0.f, string::f("Bias %d", i + 1));
+			int idx = Bias_Semitone::BIAS_1_PARAM + i;
+			// assuming that the knob, input and output ids each start at zero
+			configParam(idx, -1.f, 1.f, 0.f, string::f("Bias %d", i + 1));
+			configInput(idx, string::f("Bias %d", i + 1));
+			configOutput(idx, string::f("Bias %d", i + 1));
+			configBypass(idx, idx);
 		}
 
-		configParam(Bias_Semitone::MODE_PARAM, 0.f, 1.f, 1.f, "Mode");
+		configSwitch(Bias_Semitone::MODE_PARAM, 0, 1, 1, "Mode", {"Semitones", "Volts"});
 	}
 
 	void process(const ProcessArgs &args) override;
