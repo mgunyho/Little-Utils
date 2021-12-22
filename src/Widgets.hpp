@@ -6,7 +6,6 @@ struct TextBox : TransparentWidget {
 	// based on LedDisplayChoice
 	std::string text;
 	std::string fontPath = "res/fonts/RobotoMono-Bold.ttf";
-	std::shared_ptr<Font> font;
 	float font_size;
 	float letter_spacing;
 	Vec textOffset;
