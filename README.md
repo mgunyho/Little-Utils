@@ -102,3 +102,5 @@ under the EUPL (see [LICENSE](LICENSE.txt)). This repo also contains the fonts
 used for creating the panels: Cooper Hewitt and Overpass are licensed under the
 Open Font License (see [here](res/fonts/OFL.txt)) and Roboto is licensed under
 the Apache 2 License (see [here](res/fonts/APACHE2.txt)).
+
+Thanks to [Torinbob](https://github.com/Torinbob) and [Filipe Coelho](https://github.com/falkTX) for help with the v2 port.
