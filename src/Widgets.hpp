@@ -82,6 +82,10 @@ struct EditableTextBox : HoverableTextBox, TextField {
 		TextField::onButton(e); // this handles consuming the event
 	}
 
+	void onDragHover(const event::DragHover &e) override {
+		TextField::onDragHover(e);
+	}
+
 	void onHover(const event::Hover &e) override {
 		TextField::onHover(e);
 		HoverableTextBox::onHover(e);
