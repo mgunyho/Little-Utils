@@ -111,13 +111,3 @@ struct EditableTextBox : HoverableTextBox, TextField {
 	}
 
 };
-
-struct ToggleLEDButton : SVGSwitch {
-	BNDwidgetState state = BND_DEFAULT;
-	NVGcolor defaultColor;
-	NVGcolor hoverColor;
-
-	ToggleLEDButton() {
-		addFrame(APP->window->loadSvg(asset::system("res/ComponentLibrary/LEDButton.svg")));
-	}
-};

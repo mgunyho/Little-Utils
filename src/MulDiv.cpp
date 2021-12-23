@@ -50,7 +50,6 @@ struct MulDiv : Module {
 };
 
 void MulDiv::process(const ProcessArgs &args) {
-	float deltaTime = args.sampleTime;
 	bool clip = params[CLIP_ENABLE_PARAM].getValue() > 0.5f;
 	auto a_in = inputs[A_INPUT];
 	auto b_in = inputs[B_INPUT];
@@ -85,7 +84,7 @@ void MulDiv::process(const ProcessArgs &args) {
 
 	}
 
-	lights[CLIP_ENABLE_LIGHT].setSmoothBrightness(clip, deltaTime);
+	lights[CLIP_ENABLE_LIGHT].setBrightness(clip);
 }
 
 struct MulDivWidget : ModuleWidget {
@@ -111,9 +110,7 @@ struct MulDivWidget : ModuleWidget {
 		addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, 236), module, MulDiv::MUL_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, 286), module, MulDiv::DIV_OUTPUT));
 
-		addParam(createParamCentered<ToggleLEDButton>(Vec(22.5, 315), module, MulDiv::CLIP_ENABLE_PARAM));
-
-		addChild(createLightCentered<MediumLight<GreenLight>>(Vec(22.5, 315), module, MulDiv::CLIP_ENABLE_LIGHT));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(Vec(22.5, 315), module, MulDiv::CLIP_ENABLE_PARAM, MulDiv::CLIP_ENABLE_LIGHT));
 	}
 
 };
