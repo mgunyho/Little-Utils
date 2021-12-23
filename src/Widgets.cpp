@@ -31,6 +31,7 @@ void EditableTextBox::draw(const DrawArgs &args) {
 
 	std::string tmp = HoverableTextBox::text;
 	if(isFocused) {
+		// if we're editing, display Textfield::text
 		HoverableTextBox::setText(TextField::text);
 	}
 
