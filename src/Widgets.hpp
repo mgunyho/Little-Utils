@@ -98,7 +98,7 @@ struct EditableTextBox : HoverableTextBox, TextField {
 
 	void onSelect(const event::Select &e) override {
 		isFocused = true;
-		e.consume(dynamic_cast<TextField*>(this));
+		e.consume(static_cast<TextField*>(this));
 	}
 	void onDeselect(const event::Deselect &e) override {
 		isFocused = false;
