@@ -8,6 +8,8 @@
 
 const float MIN_EXPONENT = -3.0f;
 const float MAX_EXPONENT = 1.0f;
+const float MAX_SHORT_GATE_LENGTH = 10.f;
+const float MAX_LONG_GATE_LENGTH = 600.f;
 
 // based on PulseGeneraotr in include/util/digital.hpp
 struct CustomPulseGenerator {
@@ -72,16 +74,13 @@ struct PulseGenModule : Module {
 	bool realtimeUpdate = true; // whether to display gate_duration or gate_base_duration
 	float cv_scale = 0.f; // cv_scale = +- 1 -> 10V CV changes duration by +-10s
 	bool allowRetrigger = true; // whether to allow the pulse to be retriggered if it is already outputting
+	bool longerGateTime = false; // whether to allow longer gate time of up to 600s.
 
 	PulseGenModule() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
 		//TODO: consider overriding ParamQuantity::getDisplayValueString
-		configParam(PulseGenModule::GATE_LENGTH_PARAM, 0.f, 10.f,
-					// 0.5s in log scale
-					//rescale(-0.30103f, MIN_EXPONENT, MAX_EXPONENT, 0.f,10.f)
-					5.f // 0.1s in log mode, 5s in lin mode
-					, "Pulse duration");
+		reconfigureGateLength();
 		configSwitch(PulseGenModule::LIN_LOG_MODE_PARAM, 0.f, 1.f, 1.f, "Duration mod mode", {"Linear", "Logarithmic"});
 		configParam(PulseGenModule::CV_AMT_PARAM, -1.f, 1.f, 0.f, "CV amount");
 
@@ -94,6 +93,21 @@ struct PulseGenModule : Module {
 	}
 
 	void process(const ProcessArgs &args) override;
+
+	void reconfigureGateLength() {
+		configParam(PulseGenModule::GATE_LENGTH_PARAM, 0.f, longerGateTime ? MAX_LONG_GATE_LENGTH : MAX_SHORT_GATE_LENGTH,
+					// 0.5s in log scale
+					//rescale(-0.30103f, MIN_EXPONENT, MAX_EXPONENT, 0.f,10.f)
+					5.f // 0.1s in log mode, 5s in lin mode
+					, "Pulse duration");
+	}
+
+	void onReset() override {
+		realtimeUpdate = true;
+		allowRetrigger = true;
+		longerGateTime = false;
+		reconfigureGateLength();
+	}
 
 	json_t *dataToJson() override {
 		json_t *root = json_object();
@@ -131,7 +145,7 @@ void PulseGenModule::process(const ProcessArgs &args) {
 	} else {
 		// logarithmic mode
 		float exponent = rescale(knob_value,
-				0.f, 10.f, MIN_EXPONENT, MAX_EXPONENT);
+				0.f, longerGateTime ? MAX_LONG_GATE_LENGTH : MAX_SHORT_GATE_LENGTH, MIN_EXPONENT, MAX_EXPONENT);
 
 		float cv_exponent = rescale(fabs(cv_amt), 0.f, 1.f,
 				MIN_EXPONENT, MAX_EXPONENT);
@@ -139,10 +153,10 @@ void PulseGenModule::process(const ProcessArgs &args) {
 		// decrease exponent by one so that 10V maps to 1.0 (100%) CV.
 		cv_scale = powf(10.0f, cv_exponent - 1.f) * signum(cv_amt); // take sign into account
 
-		gate_base_duration = powf(10.0f, exponent);
+		gate_base_duration = powf(longerGateTime ? MAX_LONG_GATE_LENGTH : MAX_SHORT_GATE_LENGTH, exponent);
 	}
 	//TODO: make duration polyphonic? how to display it?
-	gate_duration = clamp(gate_base_duration + cv_voltage * cv_scale, 0.f, 10.f);
+	gate_duration = clamp(gate_base_duration + cv_voltage * cv_scale, 0.f, longerGateTime ? MAX_LONG_GATE_LENGTH : MAX_SHORT_GATE_LENGTH);
 
 	for(int c = 0; c < channels; c++) {
 
@@ -205,8 +219,12 @@ struct MsDisplayWidget : TextBox {
 				v *= 1e3f;
 				s = string::f("%#.2g", v < 1.f ? 0.f : v);
 				msLabelStatus = false;
-			} else {
+			} else if (v <= 10.) {
 				s = string::f("%#.2g", v);
+				msLabelStatus = true;
+				if(s.at(0) == '0') s.erase(0, 1);
+			} else {
+				s = string::f("%d", int(v));
 				msLabelStatus = true;
 				if(s.at(0) == '0') s.erase(0, 1);
 			}
@@ -284,6 +302,19 @@ struct PulseGeneratorToggleMenuItem: MenuItem {
 	}
 };
 
+struct PulseGeneratorToggleLongerGateMenuItem: MenuItem {
+	bool& attr;
+	PulseGenModule *module;
+	PulseGeneratorToggleLongerGateMenuItem(bool& pAttr) : MenuItem(), attr(pAttr) {
+		rightText = CHECKMARK(attr);
+	};
+	void onAction(const event::Action &e) override {
+		attr = !attr;
+		this->module->reconfigureGateLength();
+	}
+};
+
+
 struct PulseGeneratorWidget : ModuleWidget {
 	PulseGenModule *module;
 	MsDisplayWidget *msDisplay;
@@ -323,6 +354,10 @@ struct PulseGeneratorWidget : ModuleWidget {
 		menu->addChild(new MenuLabel());
 
 		{
+			menu->addChild(createMenuItem("Reset Gate", "",
+							[=]() {module->gateGenerator->reset();}));
+		}
+		{
 			auto *toggleItem = new PulseGeneratorToggleMenuItem(this->module->realtimeUpdate);
 			toggleItem->text = "Update display in real time";
 			menu->addChild(toggleItem);
@@ -333,7 +368,12 @@ struct PulseGeneratorWidget : ModuleWidget {
 			//toggleItem->rightText = CHECKMARK(toggleItem->attr);
 			menu->addChild(toggleItem);
 		}
-
+		{
+			auto *toggleItem = new PulseGeneratorToggleLongerGateMenuItem(this->module->longerGateTime);
+			toggleItem->module = this->module;
+			toggleItem->text = "Longer gate time (up to 10 mins)";
+			menu->addChild(toggleItem);
+		}
 	}
 
 };
