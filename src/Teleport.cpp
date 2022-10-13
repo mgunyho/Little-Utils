@@ -54,7 +54,7 @@ struct TeleportInModule : Teleport {
 	TeleportInModule() : Teleport(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
 		assert(NUM_INPUTS == NUM_TELEPORT_INPUTS);
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			configInput(i, string::f("Port %d", i + 1));
+			configInput(i, string::f("Port %d not connected", i + 1));
 		}
 		label = getLabel();
 		addSource(this);
@@ -158,7 +158,7 @@ struct TeleportOutModule : Teleport {
 
 	void reconfigurePorts() {
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			configOutput(i, string::f("Port %d", i + 1));
+			configOutput(i, string::f("Port %d not connected", i + 1));
 		}
 	}
 
@@ -172,9 +172,9 @@ struct TeleportOutModule : Teleport {
 					PortInfo *portInfo = src->inputInfos[TeleportInModule::INPUT_1 + i];
 					if (portInfo) {
 						std::string portName = portInfo->name;
-						configOutput(i, portName.c_str());
+						configOutput(i, portName);
 					} else {
-						configOutput(i, string::f("Port %d", i));
+						configOutput(i, string::f("Port %d not connected", i));
 					}
 				}
 				const int channels = input.getChannels();
@@ -403,7 +403,7 @@ struct TeleportInModuleWidget : TeleportModuleWidget {
 					}
 				}
 				if (! foundLabel) {
-					inModule->setPortLabel(i, string::f("Port %d", i));
+					inModule->setPortLabel(i, string::f("Port %d not connected", i));
 				}
 			}
 		}
