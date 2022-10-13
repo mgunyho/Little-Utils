@@ -98,6 +98,7 @@ struct TeleportInModule : Teleport {
 struct TeleportOutModule : Teleport {
 
 	bool sourceIsValid;
+	float portConfigTime = 0.f;
 
 	enum ParamIds {
 		NUM_PARAMS
@@ -139,9 +140,7 @@ struct TeleportOutModule : Teleport {
 
 	TeleportOutModule() : Teleport(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
 		assert(NUM_OUTPUTS == NUM_TELEPORT_INPUTS);
-		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			configOutput(i, string::f("Port %d", i + 1));
-		}
+		reconfigurePorts();
 		if(sources.size() > 0) {
 			if(sourceExists(lastInsertedKey)) {
 				label = lastInsertedKey;
@@ -157,12 +156,27 @@ struct TeleportOutModule : Teleport {
 		}
 	}
 
-	void process(const ProcessArgs &args) override {
+	void reconfigurePorts() {
+		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+			configOutput(i, string::f("Port %d", i + 1));
+		}
+	}
 
+	void process(const ProcessArgs &args) override {
+		portConfigTime = portConfigTime > 1 ? 0 : portConfigTime + args.sampleTime;
 		if(sourceExists(label)){
 			TeleportInModule *src = sources[label];
 			for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 				Input input = src->inputs[TeleportInModule::INPUT_1 + i];
+				if (portConfigTime == 0) {
+					PortInfo *portInfo = src->inputInfos[TeleportInModule::INPUT_1 + i];
+					if (portInfo) {
+						std::string portName = portInfo->name;
+						configOutput(i, portName.c_str());
+					} else {
+						configOutput(i, string::f("Port %d", i));
+					}
+				}
 				const int channels = input.getChannels();
 				outputs[OUTPUT_1 + i].setChannels(channels);
 				for(int c = 0; c < channels; c++) {
@@ -256,6 +270,7 @@ struct TeleportLabelMenuItem : MenuItem {
 	std::string label;
 	void onAction(const event::Action &e) override {
 		module->label = label;
+		module->reconfigurePorts();
 	}
 };
 
@@ -355,14 +370,45 @@ struct TeleportModuleWidget : ModuleWidget {
 
 
 struct TeleportInModuleWidget : TeleportModuleWidget {
-
+	PortWidget *portWidgets[NUM_TELEPORT_INPUTS];
+	TeleportInModule *inModule;
 	TeleportInModuleWidget(TeleportInModule *module) : TeleportModuleWidget(module, "res/TeleportIn.svg") {
+		inModule = module;
 		addLabelDisplay(new EditableTeleportLabelTextbox(module));
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			addInput(createInputCentered<PJ301MPort>(Vec(22.5, getPortYCoord(i)), module, TeleportInModule::INPUT_1 + i));
+			addInput(portWidgets[i] = createInputCentered<PJ301MPort>(Vec(22.5, getPortYCoord(i)), module, TeleportInModule::INPUT_1 + i));
 		}
 	}
 
+	void step() override {
+		if (inModule) {
+			for (int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+				std::vector<CableWidget*> cables = APP->scene->rack->getCablesOnPort(portWidgets[i]);
+				bool foundLabel = false;
+				if (cables.size()) {
+					CableWidget *cw = cables.front();
+					if (cw) {
+						Cable *cable = cw->getCable();
+						if (cable) {
+							Module *srcModule = cable->outputModule;
+							if (srcModule) {
+								std::string modelName = srcModule->getModel()->name;
+								PortInfo *portInfo = srcModule->outputInfos[cable->outputId];
+								if (portInfo) {
+									inModule->setPortLabel(i, string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str()));
+									foundLabel = true;
+								}
+							}
+						}
+					}
+				}
+				if (! foundLabel) {
+					inModule->setPortLabel(i, string::f("Port %d", i));
+				}
+			}
+		}
+		Widget::step();
+	}
 };
 
 

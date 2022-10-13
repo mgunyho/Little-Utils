@@ -22,6 +22,10 @@ struct Teleport : Module {
 	inline bool sourceExists(std::string lbl) {
 		return sources.find(lbl) != sources.end();
 	}
+
+	inline void setPortLabel(int portNum, std::string label) {
+		configInput(portNum, label);
+	}
 };
 
 std::map<std::string, TeleportInModule*> Teleport::sources = {};
