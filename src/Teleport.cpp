@@ -403,7 +403,7 @@ struct TeleportInModuleWidget : TeleportModuleWidget {
 					}
 				}
 				if (! foundLabel) {
-					inModule->setPortLabel(i, string::f("Port %d not connected", i));
+					inModule->setPortLabel(i, string::f("Port %d not connected", i + 1));
 				}
 			}
 		}
