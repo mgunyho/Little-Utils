@@ -406,8 +406,10 @@ struct TeleportInModuleWidget : TeleportModuleWidget {
 		addLabelDisplay(new EditableTeleportLabelTextbox(module));
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 			PortWidget *jack = createInputCentered<PJ301MPort>(Vec(22.5, getPortYCoord(i)), module, TeleportInModule::INPUT_1 + i);
-			addInput(jack);
-			module->setPortWidget(i, jack);
+			if (module) {
+				addInput(jack);
+				module->setPortWidget(i, jack);
+			}
 		}
 	}
 };
@@ -424,8 +426,10 @@ struct TeleportOutModuleWidget : TeleportModuleWidget {
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 			float y = getPortYCoord(i);
 			PortWidget *jack = createOutputCentered<PJ301MPort>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i);
-			addOutput(jack);
-			module->setPortWidget(i, jack);
+			if (module) {
+				addOutput(jack);
+				module->setPortWidget(i, jack);
+			}
 			addChild(createTinyLightForPort<GreenRedLight>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1_LIGHTG + 2*i));
 		}
 	}
