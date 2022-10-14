@@ -8,6 +8,8 @@ struct TeleportInModule;
 
 struct Teleport : Module {
 	std::string label;
+	float portConfigTime = 0.f;
+	PortWidget *portWidgets[NUM_TELEPORT_INPUTS];
 	Teleport(int numParams, int numInputs, int numOutputs, int numLights = 0) {
 		config(numParams, numInputs, numOutputs, numLights);
 	}
@@ -25,6 +27,10 @@ struct Teleport : Module {
 
 	inline void setPortLabel(int portNum, std::string label) {
 		configInput(portNum, label);
+	}
+
+	inline void setPortWidget(int portNum, PortWidget *widget) {
+		portWidgets[portNum] = widget;
 	}
 };
 

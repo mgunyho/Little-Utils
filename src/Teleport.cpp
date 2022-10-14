@@ -64,7 +64,40 @@ struct TeleportInModule : Teleport {
 		sources.erase(label);
 	}
 
-	// process() is not needed for a teleport source, values are read directly from inputs by teleport out
+	void process(const ProcessArgs &args) override {
+		portConfigTime = portConfigTime > 1 ? 0 : portConfigTime + args.sampleTime;
+		if (portConfigTime == 0)
+			processPortLabels();
+	}
+
+	void processPortLabels() {
+		for (int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+			if (portWidgets[i]) {
+				std::vector<CableWidget*> cables = APP->scene->rack->getCablesOnPort(portWidgets[i]);
+				bool foundLabel = false;
+				if (cables.size()) {
+					CableWidget *cw = cables.front();
+					if (cw) {
+						Cable *cable = cw->getCable();
+						if (cable) {
+							Module *srcModule = cable->outputModule;
+							if (srcModule) {
+								std::string modelName = srcModule->getModel()->name;
+								PortInfo *portInfo = srcModule->outputInfos[cable->outputId];
+								if (portInfo) {
+									setPortLabel(i, string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str()));
+									foundLabel = true;
+								}
+							}
+						}
+					}
+				}
+				if (! foundLabel) {
+					setPortLabel(i, string::f("Port %d not connected", i + 1));
+				}
+			}
+		}
+	}
 
 	json_t* dataToJson() override {
 		json_t *data = json_object();
@@ -98,7 +131,6 @@ struct TeleportInModule : Teleport {
 struct TeleportOutModule : Teleport {
 
 	bool sourceIsValid;
-	float portConfigTime = 0.f;
 
 	enum ParamIds {
 		NUM_PARAMS
@@ -370,44 +402,13 @@ struct TeleportModuleWidget : ModuleWidget {
 
 
 struct TeleportInModuleWidget : TeleportModuleWidget {
-	PortWidget *portWidgets[NUM_TELEPORT_INPUTS];
-	TeleportInModule *inModule;
 	TeleportInModuleWidget(TeleportInModule *module) : TeleportModuleWidget(module, "res/TeleportIn.svg") {
-		inModule = module;
 		addLabelDisplay(new EditableTeleportLabelTextbox(module));
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			addInput(portWidgets[i] = createInputCentered<PJ301MPort>(Vec(22.5, getPortYCoord(i)), module, TeleportInModule::INPUT_1 + i));
+			PortWidget *jack = createInputCentered<PJ301MPort>(Vec(22.5, getPortYCoord(i)), module, TeleportInModule::INPUT_1 + i);
+			addInput(jack);
+			module->setPortWidget(i, jack);
 		}
-	}
-
-	void step() override {
-		if (inModule) {
-			for (int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-				std::vector<CableWidget*> cables = APP->scene->rack->getCablesOnPort(portWidgets[i]);
-				bool foundLabel = false;
-				if (cables.size()) {
-					CableWidget *cw = cables.front();
-					if (cw) {
-						Cable *cable = cw->getCable();
-						if (cable) {
-							Module *srcModule = cable->outputModule;
-							if (srcModule) {
-								std::string modelName = srcModule->getModel()->name;
-								PortInfo *portInfo = srcModule->outputInfos[cable->outputId];
-								if (portInfo) {
-									inModule->setPortLabel(i, string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str()));
-									foundLabel = true;
-								}
-							}
-						}
-					}
-				}
-				if (! foundLabel) {
-					inModule->setPortLabel(i, string::f("Port %d not connected", i + 1));
-				}
-			}
-		}
-		Widget::step();
 	}
 };
 
@@ -422,7 +423,9 @@ struct TeleportOutModuleWidget : TeleportModuleWidget {
 
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 			float y = getPortYCoord(i);
-			addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i));
+			PortWidget *jack = createOutputCentered<PJ301MPort>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i);
+			addOutput(jack);
+			module->setPortWidget(i, jack);
 			addChild(createTinyLightForPort<GreenRedLight>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1_LIGHTG + 2*i));
 		}
 	}
