@@ -72,9 +72,9 @@ struct TeleportInModule : Teleport {
 
 	void processPortLabels() {
 		for (int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+			bool foundLabel = false;
 			if (portWidgets[i]) {
 				std::vector<CableWidget*> cables = APP->scene->rack->getCablesOnPort(portWidgets[i]);
-				bool foundLabel = false;
 				if (cables.size()) {
 					CableWidget *cw = cables.front();
 					if (cw) {
@@ -92,9 +92,9 @@ struct TeleportInModule : Teleport {
 						}
 					}
 				}
-				if (! foundLabel) {
-					setPortLabel(i, string::f("Port %d not connected", i + 1));
-				}
+			}
+			if (! foundLabel) {
+				setPortLabel(i, string::f("Port %d not connected", i + 1));
 			}
 		}
 	}
