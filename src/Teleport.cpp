@@ -85,7 +85,7 @@ struct TeleportInModule : Teleport {
 								std::string modelName = srcModule->getModel()->name;
 								PortInfo *portInfo = srcModule->outputInfos[cable->outputId];
 								if (portInfo) {
-									setPortLabel(i, string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str()));
+									configInput(i, string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str()));
 									foundLabel = true;
 								}
 							}
@@ -94,7 +94,7 @@ struct TeleportInModule : Teleport {
 				}
 			}
 			if (! foundLabel) {
-				setPortLabel(i, string::f("Port %d not connected", i + 1));
+				configInput(i, string::f("Port %d not connected", i + 1));
 			}
 		}
 	}

@@ -25,10 +25,6 @@ struct Teleport : Module {
 		return sources.find(lbl) != sources.end();
 	}
 
-	inline void setPortLabel(int portNum, std::string label) {
-		configInput(portNum, label);
-	}
-
 	inline void setPortWidget(int portNum, PortWidget *widget) {
 		portWidgets[portNum] = widget;
 	}
