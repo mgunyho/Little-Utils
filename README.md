@@ -92,8 +92,11 @@ but I haven't come across this myself.
 If you have suggestions or feedback or find a bug or whatever, feel free to open
 an issue or a pull request in this repository!
 
-Building the modules follows the [standard procedure](https://vcvrack.com/manual/PluginDevelopmentTutorial.html#creating-the-template-plugin):
-`RACK_DIR=/path/to/Rack_SDK/ make install`.
+Building the modules follows the [standard procedure](https://vcvrack.com/manual/PluginDevelopmentTutorial.html):
+```
+export RACK_DIR=/path/to/Rack_SDK/
+make install
+```
 
 
 ## Licenses
