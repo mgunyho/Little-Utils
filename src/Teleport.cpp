@@ -9,6 +9,9 @@
 //TODO: undo history for label/source change
 
 struct TeleportInModule : Teleport {
+	// last modification time of the input ports
+	std::chrono::steady_clock::time_point portsChangedTime;
+
 	enum ParamIds {
 		NUM_PARAMS
 	};
@@ -57,6 +60,7 @@ struct TeleportInModule : Teleport {
 			configInput(i, string::f("Port %d", i + 1));
 		}
 		label = getLabel();
+		portsChangedTime = std::chrono::steady_clock::now();
 		addSource(this);
 	}
 
@@ -65,6 +69,10 @@ struct TeleportInModule : Teleport {
 	}
 
 	// process() is not needed for a teleport source, values are read directly from inputs by teleport out
+
+	void onPortChange(const PortChangeEvent& e) {
+		portsChangedTime = std::chrono::steady_clock::now();
+	}
 
 	json_t* dataToJson() override {
 		json_t *data = json_object();
@@ -89,6 +97,7 @@ struct TeleportInModule : Teleport {
 			label = getLabel();
 		}
 
+		portsChangedTime = std::chrono::steady_clock::now();
 		addSource(this);
 
 	}
@@ -96,6 +105,9 @@ struct TeleportInModule : Teleport {
 };
 
 struct TeleportOutModule : Teleport {
+
+	// last time we have checked the source ports for updates
+	std::chrono::steady_clock::time_point sourcePortsChangedTime;
 
 	bool sourceIsValid;
 
@@ -139,9 +151,6 @@ struct TeleportOutModule : Teleport {
 
 	TeleportOutModule() : Teleport(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
 		assert(NUM_OUTPUTS == NUM_TELEPORT_INPUTS);
-		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			configOutput(i, string::f("Port %d", i + 1));
-		}
 		if(sources.size() > 0) {
 			if(sourceExists(lastInsertedKey)) {
 				label = lastInsertedKey;
@@ -154,7 +163,40 @@ struct TeleportOutModule : Teleport {
 		} else {
 			label = "";
 			sourceIsValid = false;
+			// there are no sources, so process() will not update the labels, we have to do it here
+			updatePortLabels();
 		}
+		// ensure that port labels are updated in process() by setting the update time to the epoch
+		sourcePortsChangedTime = std::chrono::steady_clock::time_point();
+	}
+
+	void updatePortLabels() {
+		printf("TeleportOutModule::updatePortLabels()\n");
+
+		/*
+		if sourceExists(label) {
+			TeleportInModule *src = sources[label];
+		}
+
+		std::vector<CableWidget*> allCableWidgets = APP->rack->getCableContainer()->children;
+		std::vector<Cable*> sourceCables = reserve???();
+		for (Widget* w: allCableWidgets) {
+			CableWidget* cw = dynamic_cast<CableWidget*>(w);
+			Cable *c = cw->getCable();
+			if (c && src && c->inputModule == src) {
+
+			}
+		}
+
+		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+			if (src && src.inputs[i].isConnected()) {
+				std::string sourceLabel = ???;
+				configOutput(i, string::f("Port %d from %s", i + 1, sourceLabel));
+			} else {
+				configOutput(i, string::f("Port %d, not connected", i + 1));
+			}
+		}
+		*/
 	}
 
 	void process(const ProcessArgs &args) override {
@@ -170,7 +212,15 @@ struct TeleportOutModule : Teleport {
 				}
 				lights[OUTPUT_1_LIGHTG + 2*i].setBrightness( input.isConnected());
 				lights[OUTPUT_1_LIGHTR + 2*i].setBrightness(!input.isConnected());
+
 			}
+
+			// if the ports have been updated, or the source has just become available
+			if (src->portsChangedTime > sourcePortsChangedTime || !sourceIsValid) {
+				updatePortLabels(); //TODO: we're doing sourceExists(label) twice now, is this acceptable?
+				sourcePortsChangedTime = std::chrono::steady_clock::now();
+			}
+
 			sourceIsValid = true;
 		} else {
 			for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
@@ -179,6 +229,13 @@ struct TeleportOutModule : Teleport {
 				lights[OUTPUT_1_LIGHTG + 2*i].setBrightness(0.f);
 				lights[OUTPUT_1_LIGHTR + 2*i].setBrightness(0.f);
 			}
+
+			if (sourceIsValid) {
+				// source was just removed
+				updatePortLabels();
+				sourcePortsChangedTime = std::chrono::steady_clock::time_point();
+			}
+
 			sourceIsValid = false;
 		}
 	};
@@ -193,6 +250,7 @@ struct TeleportOutModule : Teleport {
 		json_t *label_json = json_object_get(root, "label");
 		if(json_is_string(label_json)) {
 			label = json_string_value(label_json);
+			sourcePortsChangedTime = std::chrono::steady_clock::time_point();
 		}
 	}
 };
@@ -256,6 +314,7 @@ struct TeleportLabelMenuItem : MenuItem {
 	std::string label;
 	void onAction(const event::Action &e) override {
 		module->label = label;
+		module->sourcePortsChangedTime = std::chrono::steady_clock::time_point();
 	}
 };
 
