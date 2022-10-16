@@ -171,32 +171,51 @@ struct TeleportOutModule : Teleport {
 	}
 
 	void updatePortLabels() {
-		printf("TeleportOutModule::updatePortLabels()\n");
 
-		/*
-		if sourceExists(label) {
+		if(sourceExists(label)) {
 			TeleportInModule *src = sources[label];
-		}
 
-		std::vector<CableWidget*> allCableWidgets = APP->rack->getCableContainer()->children;
-		std::vector<Cable*> sourceCables = reserve???();
-		for (Widget* w: allCableWidgets) {
-			CableWidget* cw = dynamic_cast<CableWidget*>(w);
-			Cable *c = cw->getCable();
-			if (c && src && c->inputModule == src) {
+			// As of v2.1.2, there is no API to access cables connected to a
+			// port from the Module (only from the ModuleWidget). Here we
+			// emulate what RackWidget->getCablesOnPort(PortWidget* p) does,
+			// but directly check that the related module matches what we're
+			// looking for.
 
+			// mapping of portIds of the source TeleportIn to the port labels
+			// on the other ends of their cables
+			std::map<int, std::string> sourceIncomingPortLabels = {};
+
+			for (Widget* w: APP->scene->rack->getCableContainer()->children) {
+				CableWidget* cw = dynamic_cast<CableWidget*>(w);
+				Cable* cable = cw->getCable();
+				if(cable && cable->inputModule == src) {
+					Module* srcModule = cable->outputModule;
+					if (srcModule) {
+						std::string modelName = srcModule->getModel()->name;
+						PortInfo *portInfo = srcModule->outputInfos[cable->outputId];
+						if (portInfo) {
+							//TODO: weird stuff happens if you chain a bunch of teleports...
+							sourceIncomingPortLabels[cable->inputId] = string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str());
+						}
+					}
+				}
 			}
-		}
 
-		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
-			if (src && src.inputs[i].isConnected()) {
-				std::string sourceLabel = ???;
-				configOutput(i, string::f("Port %d from %s", i + 1, sourceLabel));
-			} else {
+			for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
+				auto portLabel = sourceIncomingPortLabels.find(i);
+				if(portLabel != sourceIncomingPortLabels.end()) {
+					configOutput(i, string::f("Port %d, from %s", i + 1, portLabel->second.c_str()));
+				} else {
+					configOutput(i, string::f("Port %d, not connected", i + 1));
+				}
+			}
+
+		} else {
+			// no source module, set all labels as "not connected"
+			for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 				configOutput(i, string::f("Port %d, not connected", i + 1));
 			}
 		}
-		*/
 	}
 
 	void process(const ProcessArgs &args) override {
@@ -212,7 +231,6 @@ struct TeleportOutModule : Teleport {
 				}
 				lights[OUTPUT_1_LIGHTG + 2*i].setBrightness( input.isConnected());
 				lights[OUTPUT_1_LIGHTR + 2*i].setBrightness(!input.isConnected());
-
 			}
 
 			// if the ports have been updated, or the source has just become available
