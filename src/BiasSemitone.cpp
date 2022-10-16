@@ -102,6 +102,8 @@ void Bias_Semitone::process(const ProcessArgs &args) {
 
 	int li = 0; // index of the latest encountered active input
 	for(int i = 0; i < N_KNOBS; i++) {
+		// TODO: don't update values on every frame, but e.g. every 100 frames or something. the UI is < 100Hz, so it makes no sense to update this at 44 kHz...
+		// see https://github.com/squinkylabs/Demo/blob/main/docs/efficient-plugins.md
 		float bias = params[BIAS_1_PARAM + i].getValue();
 		li = inputs[INPUT_1 + i].isConnected() ? i : li;
 		if(params[MODE_PARAM].getValue() < 0.5f) {
