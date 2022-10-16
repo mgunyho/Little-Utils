@@ -1,6 +1,7 @@
 #include "Teleport.hpp"
 #include "Widgets.hpp"
 #include "Util.hpp"
+#include <unordered_map>
 
 /////////////
 // modules //
@@ -183,7 +184,7 @@ struct TeleportOutModule : Teleport {
 
 			// mapping of portIds of the source TeleportIn to the port labels
 			// on the other ends of their cables
-			std::map<int, std::string> sourceIncomingPortLabels = {};
+			std::unordered_map<int, std::string> sourceIncomingPortLabels = {};
 
 			for (Widget* w: APP->scene->rack->getCableContainer()->children) {
 				CableWidget* cw = dynamic_cast<CableWidget*>(w);
