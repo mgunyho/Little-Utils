@@ -186,15 +186,15 @@ struct TeleportOutModule : Teleport {
 			// on the other ends of their cables
 			std::unordered_map<int, std::string> sourceIncomingPortLabels = {};
 
-			for (Widget* w: APP->scene->rack->getCableContainer()->children) {
+			for(Widget* w: APP->scene->rack->getCableContainer()->children) {
 				CableWidget* cw = dynamic_cast<CableWidget*>(w);
 				Cable* cable = cw->getCable();
 				if(cable && cable->inputModule == src) {
 					Module* srcModule = cable->outputModule;
-					if (srcModule) {
+					if(srcModule) {
 						std::string modelName = srcModule->getModel()->name;
 						PortInfo *portInfo = srcModule->outputInfos[cable->outputId];
-						if (portInfo) {
+						if(portInfo) {
 							//TODO: weird stuff happens if you chain a bunch of teleports...
 							sourceIncomingPortLabels[cable->inputId] = string::f("%s - %s", modelName.c_str(), portInfo->getName().c_str());
 						}
@@ -235,7 +235,7 @@ struct TeleportOutModule : Teleport {
 			}
 
 			// if the ports have been updated, or the source has just become available
-			if (src->portsChangedTime > sourcePortsChangedTime || !sourceIsValid) {
+			if(src->portsChangedTime > sourcePortsChangedTime || !sourceIsValid) {
 				updatePortLabels(); //TODO: we're doing sourceExists(label) twice now, is this acceptable?
 				sourcePortsChangedTime = std::chrono::steady_clock::now();
 			}
@@ -249,7 +249,7 @@ struct TeleportOutModule : Teleport {
 				lights[OUTPUT_1_LIGHTR + 2*i].setBrightness(0.f);
 			}
 
-			if (sourceIsValid) {
+			if(sourceIsValid) {
 				// source was just removed
 				updatePortLabels();
 				sourcePortsChangedTime = std::chrono::steady_clock::time_point();
