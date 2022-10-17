@@ -321,16 +321,6 @@ struct TeleportSourceSelectorTextBox : HoverableTextBox, TeleportLabelDisplay {
 };
 
 // Custom PortWidget for teleport outputs, with custom tooltip behavior
-struct TeleportOutPortWidget;
-
-struct TeleportOutPortTooltip : ui::Tooltip {
-	TeleportOutPortWidget* portWidget;
-
-	void step() override {
-		printf("TeleportOutPortTooltip::step()\n");
-	}
-};
-
 struct TeleportOutPortWidget : PJ301MPort {
 	TeleportOutPortTooltip* customTooltip = NULL;
 
@@ -397,6 +387,11 @@ struct TeleportOutPortWidget : PJ301MPort {
 	}
 
 };
+
+void TeleportOutPortTooltip::step() {
+	printf("TeleportOutPortTooltip::step()\n");
+};
+
 
 
 
