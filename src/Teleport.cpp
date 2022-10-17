@@ -321,17 +321,40 @@ struct TeleportSourceSelectorTextBox : HoverableTextBox, TeleportLabelDisplay {
 };
 
 // Custom PortWidget for teleport outputs, with custom tooltip behavior
-struct TeleportOutPortTooltip;
+struct TeleportOutPortWidget;
+
+struct TeleportOutPortTooltip : ui::Tooltip {
+	TeleportOutPortWidget* portWidget;
+
+	void step() override {
+		printf("TeleportOutPortTooltip::step()\n");
+	}
+};
 
 struct TeleportOutPortWidget : PJ301MPort {
-	TeleportOutPortTooltip* customTooltip;
+	TeleportOutPortTooltip* customTooltip = NULL;
 
 	void createTooltip() {
-		printf("TeleportOutPortWidget::createTooltip()\n");
+		// same as PortWidget::craeteTooltip(), but internal->tooltip replaced with customTooltip
+		if (!settings::tooltips)
+			return;
+		if (customTooltip)
+			return;
+		if (!module)
+			return;
+
+		TeleportOutPortTooltip* tooltip = new TeleportOutPortTooltip;
+		tooltip->portWidget = this;
+		APP->scene->addChild(tooltip);
+		customTooltip = tooltip;
 	}
 
 	void destroyTooltip() {
-		printf("TeleportOutPortWidget::destroyTooltip()\n");
+		if(!customTooltip)
+			return;
+		APP->scene->removeChild(customTooltip);
+		delete customTooltip;
+		customTooltip = NULL;
 	}
 
 	// createTooltip cannot be overridden, so we have to manually reimplement all the methods that call createTooltip, because these can be overridden.
@@ -373,9 +396,6 @@ struct TeleportOutPortWidget : PJ301MPort {
 		destroyTooltip();
 	}
 
-};
-
-struct TeleportOutPortTooltip : ui::Tooltip {
 };
 
 
