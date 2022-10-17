@@ -389,46 +389,108 @@ struct TeleportOutPortWidget : PJ301MPort {
 };
 
 void TeleportOutPortTooltip::step() {
-	// mostly copy-pasted from PortTooltip::step(), with minor changes.
+	// Based on PortTooltip::step(), but reworked to display also the label of
+	// the incoming signal at the other end of the teleport if applicable.
 	if (portWidget->module) {
+
+		// The final tooltip text is going to have these four parts.
+		std::string labelText = "";
+		std::string description = ""; // Note: TeleportOutPortWidget doesn't actually have a description, but this is here for completeness anyway.
+		std::string voltageText = "";
+		std::string cableText = "";
+
+		// find out the corresponding teleport input
+		TeleportOutModule* mod = dynamic_cast<TeleportOutModule*>(portWidget->module);
+		TeleportInModule* inputTeleport = NULL;
+		if(mod && mod->sourceExists(mod->label)) {
+			inputTeleport = mod->sources[mod->label];
+		}
+
 		engine::Port* port = portWidget->getPort();
 		engine::PortInfo* portInfo = portWidget->getPortInfo();
-		// Label
-		text = portInfo->getFullName();
-		// Description
-		std::string description = portInfo->getDescription();
-		if (description != "") {
-			text += "\n";
-			text += description;
-		}
-		// Voltage, number of channels
+
+		description = portInfo->getDescription();
+
+		// Get voltage text based on the number of channels
 		int channels = port->getChannels();
 		for (int i = 0; i < channels; i++) {
 			float v = port->getVoltage(i);
 			// Add newline or comma
-			text += "\n";
+			voltageText += "\n";
 			if (channels > 1)
-				text += string::f("%d: ", i + 1);
-			text += string::f("% .3fV", math::normalizeZero(v));
+				voltageText += string::f("%d: ", i + 1);
+			voltageText += string::f("% .3fV", math::normalizeZero(v));
 		}
-		// Connected to
-		std::vector<CableWidget*> cables = APP->scene->rack->getCompleteCablesOnPort(portWidget);
-		for (auto it = cables.rbegin(); it != cables.rend(); it++) {
-			CableWidget* cable = *it;
-			PortWidget* otherPw = (portWidget->type == engine::Port::INPUT) ? cable->outputPort : cable->inputPort;
-			if (!otherPw)
+
+		labelText = portInfo->getFullName();
+
+		// Find the relevant cables: the cable going out of this port and the
+		// cable of the corresponding port on the other end of the teleport. We
+		// iterate over all cables, but that's fine, getCompleteCablesOnPort
+		// would do that anyway.
+		for (widget::Widget* w : APP->scene->rack->getCableContainer()->children) {
+			CableWidget* cw = dynamic_cast<CableWidget*>(w);
+
+			if(!cw->isComplete())
 				continue;
-			text += "\n";
-			if (portWidget->type == engine::Port::INPUT)
-				text += "From ";
-			else
-				text += "To ";
-			text += otherPw->module->model->getFullName();
-			text += ": ";
-			text += otherPw->getPortInfo()->getName();
-			text += " ";
-			text += (otherPw->type == engine::Port::INPUT) ? "input" : "output";
+
+			if(cw->outputPort == portWidget) {
+				// we've found a cable that is outgoing from this port
+				// we know that the portWidget is always an output, so otherPw will be the cable input port.
+				PortWidget* otherPw = cw->inputPort;
+				if(!otherPw)
+					continue;
+
+				cableText += "\n";
+				// This widget is always instantiated on an output, so always say "To"
+				cableText += "To ";
+				cableText += otherPw->module->model->getFullName();
+				cableText += ": ";
+				cableText += otherPw->getPortInfo()->getName();
+				cableText += " ";
+				cableText += "input";
+
+			} else if(inputTeleport
+			   && cw->inputPort
+			   && cw->outputPort
+			   && cw->inputPort->module == inputTeleport
+			   && cw->inputPort->portId == portWidget->portId
+			  ) {
+				// cable is incoming to the other end of the corresponding
+				// teleport input, snag the label from it
+				labelText += "\n";
+				labelText += "Teleporting from ";
+				labelText += cw->outputPort->module->model->getFullName();
+				labelText += ": ";
+				labelText += cw->outputPort->getPortInfo()->getName();
+				labelText += " ";
+				labelText += "output";
+
+			} else {
+				continue;
+			}
+
 		}
+
+		// Assemble the final tooltip text.
+		text = labelText;
+
+		// Description
+		if(description != "") {
+			text += "\n";
+			text += description;
+		}
+
+		if(voltageText != "") {
+			// voltageText already starts with newline
+			text += voltageText;
+		}
+
+		if(cableText != "") {
+			// cableText starts with newline;
+			text += cableText;
+		}
+
 	}
 	Tooltip::step();
 	// Position at bottom-right of parameter
