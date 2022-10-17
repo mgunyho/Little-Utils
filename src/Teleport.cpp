@@ -320,6 +320,65 @@ struct TeleportSourceSelectorTextBox : HoverableTextBox, TeleportLabelDisplay {
 
 };
 
+// Custom PortWidget for teleport outputs, with custom tooltip behavior
+struct TeleportOutPortTooltip;
+
+struct TeleportOutPortWidget : PJ301MPort {
+	TeleportOutPortTooltip* customTooltip;
+
+	void createTooltip() {
+		printf("TeleportOutPortWidget::createTooltip()\n");
+	}
+
+	void destroyTooltip() {
+		printf("TeleportOutPortWidget::destroyTooltip()\n");
+	}
+
+	// createTooltip cannot be overridden, so we have to manually reimplement all the methods that call createTooltip, because these can be overridden.
+	void onEnter(const EnterEvent& e) override {
+		createTooltip();
+		// don't call superclass onEnter, it calls its own createTooltip()
+	}
+
+	void onLeave(const LeaveEvent& e) override {
+		destroyTooltip();
+		// don't call superclass onLeave, it calls its own destroyTooltip()
+	}
+
+	void onDragDrop(const DragDropEvent& e) override {
+		if(e.origin == this) {
+			createTooltip();
+		}
+		DragDropEvent e2 = e;
+		e2.origin = NULL;
+		PJ301MPort::onDragDrop(e2);
+	}
+
+	void onDragEnter(const DragEnterEvent& e) override {
+		PortWidget* pw = dynamic_cast<PortWidget*>(e.origin);
+		if (pw) {
+			createTooltip();
+		}
+		DragEnterEvent e2 = e;
+		e2.origin = NULL;
+		PJ301MPort::onDragEnter(e2);
+	}
+
+	void onDragLeave(const DragLeaveEvent& e) override {
+		destroyTooltip();
+		PJ301MPort::onDragLeave(e);
+	}
+
+	~TeleportOutPortWidget() {
+		destroyTooltip();
+	}
+
+};
+
+struct TeleportOutPortTooltip : ui::Tooltip {
+};
+
+
 
 ////////////////////
 // module widgets //
@@ -376,7 +435,7 @@ struct TeleportOutModuleWidget : TeleportModuleWidget {
 
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 			float y = getPortYCoord(i);
-			addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i));
+			addOutput(createOutputCentered<TeleportOutPortWidget>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i));
 			addChild(createTinyLightForPort<GreenRedLight>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1_LIGHTG + 2*i));
 		}
 	}
