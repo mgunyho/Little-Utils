@@ -389,7 +389,53 @@ struct TeleportOutPortWidget : PJ301MPort {
 };
 
 void TeleportOutPortTooltip::step() {
-	printf("TeleportOutPortTooltip::step()\n");
+	// mostly copy-pasted from PortTooltip::step(), with minor changes.
+	if (portWidget->module) {
+		engine::Port* port = portWidget->getPort();
+		engine::PortInfo* portInfo = portWidget->getPortInfo();
+		// Label
+		text = portInfo->getFullName();
+		// Description
+		std::string description = portInfo->getDescription();
+		if (description != "") {
+			text += "\n";
+			text += description;
+		}
+		// Voltage, number of channels
+		int channels = port->getChannels();
+		for (int i = 0; i < channels; i++) {
+			float v = port->getVoltage(i);
+			// Add newline or comma
+			text += "\n";
+			if (channels > 1)
+				text += string::f("%d: ", i + 1);
+			text += string::f("% .3fV", math::normalizeZero(v));
+		}
+		// Connected to
+		std::vector<CableWidget*> cables = APP->scene->rack->getCompleteCablesOnPort(portWidget);
+		for (auto it = cables.rbegin(); it != cables.rend(); it++) {
+			CableWidget* cable = *it;
+			PortWidget* otherPw = (portWidget->type == engine::Port::INPUT) ? cable->outputPort : cable->inputPort;
+			if (!otherPw)
+				continue;
+			text += "\n";
+			if (portWidget->type == engine::Port::INPUT)
+				text += "From ";
+			else
+				text += "To ";
+			text += otherPw->module->model->getFullName();
+			text += ": ";
+			text += otherPw->getPortInfo()->getName();
+			text += " ";
+			text += (otherPw->type == engine::Port::INPUT) ? "input" : "output";
+		}
+	}
+	Tooltip::step();
+	// Position at bottom-right of parameter
+	box.pos = portWidget->getAbsoluteOffset(portWidget->box.size).round();
+	// Fit inside parent (copied from Tooltip.cpp)
+	assert(parent);
+	box = box.nudge(parent->box.zeroPos());
 };
 
 
