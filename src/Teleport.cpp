@@ -347,7 +347,8 @@ struct TeleportOutPortWidget : PJ301MPort {
 		customTooltip = NULL;
 	}
 
-	// createTooltip cannot be overridden, so we have to manually reimplement all the methods that call createTooltip, because these can be overridden.
+	// createTooltip cannot be overridden, so we have to manually override and
+	// reimplement all the methods that call createTooltip.
 	void onEnter(const EnterEvent& e) override {
 		createTooltip();
 		// don't call superclass onEnter, it calls its own createTooltip()
@@ -363,6 +364,9 @@ struct TeleportOutPortWidget : PJ301MPort {
 			createTooltip();
 		}
 		DragDropEvent e2 = e;
+		// HACK: this depends on the implementation detail that the superclass
+		// onDragDrop will call createTooltip() if the origin is not null. Same
+		// for onDragEnter.
 		e2.origin = NULL;
 		PJ301MPort::onDragDrop(e2);
 	}
@@ -475,7 +479,6 @@ void TeleportOutPortTooltip::step() {
 		// Assemble the final tooltip text.
 		text = labelText;
 
-		// Description
 		if(description != "") {
 			text += "\n";
 			text += description;
@@ -487,7 +490,7 @@ void TeleportOutPortTooltip::step() {
 		}
 
 		if(cableText != "") {
-			// cableText starts with newline;
+			// cableText already starts with newline
 			text += cableText;
 		}
 
