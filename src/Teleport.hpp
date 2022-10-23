@@ -24,5 +24,14 @@ struct Teleport : Module {
 	}
 };
 
+
+// these have to be forward-declared here to make the implementation of step() possible, see cpp for details
+struct TeleportOutPortWidget;
+struct TeleportOutPortTooltip : ui::Tooltip {
+	TeleportOutPortWidget* portWidget;
+	void step() override;
+};
+
+
 std::map<std::string, TeleportInModule*> Teleport::sources = {};
 std::string Teleport::lastInsertedKey = "";

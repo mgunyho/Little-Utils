@@ -320,6 +320,191 @@ struct TeleportSourceSelectorTextBox : HoverableTextBox, TeleportLabelDisplay {
 
 };
 
+// Custom PortWidget for teleport outputs, with custom tooltip behavior
+struct TeleportOutPortWidget : PJ301MPort {
+	TeleportOutPortTooltip* customTooltip = NULL;
+
+	void createTooltip() {
+		// same as PortWidget::craeteTooltip(), but internal->tooltip replaced with customTooltip
+		if (!settings::tooltips)
+			return;
+		if (customTooltip)
+			return;
+		if (!module)
+			return;
+
+		TeleportOutPortTooltip* tooltip = new TeleportOutPortTooltip;
+		tooltip->portWidget = this;
+		APP->scene->addChild(tooltip);
+		customTooltip = tooltip;
+	}
+
+	void destroyTooltip() {
+		if(!customTooltip)
+			return;
+		APP->scene->removeChild(customTooltip);
+		delete customTooltip;
+		customTooltip = NULL;
+	}
+
+	// createTooltip cannot be overridden, so we have to manually override and
+	// reimplement all the methods that call createTooltip.
+	void onEnter(const EnterEvent& e) override {
+		createTooltip();
+		// don't call superclass onEnter, it calls its own createTooltip()
+	}
+
+	void onLeave(const LeaveEvent& e) override {
+		destroyTooltip();
+		// don't call superclass onLeave, it calls its own destroyTooltip()
+	}
+
+	void onDragDrop(const DragDropEvent& e) override {
+		if(e.origin == this) {
+			createTooltip();
+		}
+		DragDropEvent e2 = e;
+		// HACK: this depends on the implementation detail that the superclass
+		// onDragDrop will call createTooltip() if the origin is not null. Same
+		// for onDragEnter.
+		e2.origin = NULL;
+		PJ301MPort::onDragDrop(e2);
+	}
+
+	void onDragEnter(const DragEnterEvent& e) override {
+		PortWidget* pw = dynamic_cast<PortWidget*>(e.origin);
+		if (pw) {
+			createTooltip();
+		}
+		DragEnterEvent e2 = e;
+		e2.origin = NULL;
+		PJ301MPort::onDragEnter(e2);
+	}
+
+	void onDragLeave(const DragLeaveEvent& e) override {
+		destroyTooltip();
+		PJ301MPort::onDragLeave(e);
+	}
+
+	~TeleportOutPortWidget() {
+		destroyTooltip();
+	}
+
+};
+
+void TeleportOutPortTooltip::step() {
+	// Based on PortTooltip::step(), but reworked to display also the label of
+	// the incoming signal at the other end of the teleport if applicable.
+	if (portWidget->module) {
+
+		// The final tooltip text is going to have these four parts.
+		std::string labelText = "";
+		std::string description = ""; // Note: TeleportOutPortWidget doesn't actually have a description, but this is here for completeness anyway.
+		std::string voltageText = "";
+		std::string cableText = "";
+
+		// find out the corresponding teleport input
+		TeleportOutModule* mod = dynamic_cast<TeleportOutModule*>(portWidget->module);
+		TeleportInModule* inputTeleport = NULL;
+		if(mod && mod->sourceExists(mod->label)) {
+			inputTeleport = mod->sources[mod->label];
+		}
+
+		engine::Port* port = portWidget->getPort();
+		engine::PortInfo* portInfo = portWidget->getPortInfo();
+
+		description = portInfo->getDescription();
+
+		// Get voltage text based on the number of channels
+		int channels = port->getChannels();
+		for (int i = 0; i < channels; i++) {
+			float v = port->getVoltage(i);
+			// Add newline or comma
+			voltageText += "\n";
+			if (channels > 1)
+				voltageText += string::f("%d: ", i + 1);
+			voltageText += string::f("% .3fV", math::normalizeZero(v));
+		}
+
+		labelText = portInfo->getFullName();
+
+		// Find the relevant cables: the cable going out of this port and the
+		// cable of the corresponding port on the other end of the teleport. We
+		// iterate over all cables, but that's fine, getCompleteCablesOnPort
+		// would do that anyway.
+		for (widget::Widget* w : APP->scene->rack->getCableContainer()->children) {
+			CableWidget* cw = dynamic_cast<CableWidget*>(w);
+
+			if(!cw->isComplete())
+				continue;
+
+			if(cw->outputPort == portWidget) {
+				// we've found a cable that is outgoing from this port
+				// we know that the portWidget is always an output, so otherPw will be the cable input port.
+				PortWidget* otherPw = cw->inputPort;
+				if(!otherPw)
+					continue;
+
+				cableText += "\n";
+				// This widget is always instantiated on an output, so always say "To"
+				cableText += "To ";
+				cableText += otherPw->module->model->getFullName();
+				cableText += ": ";
+				cableText += otherPw->getPortInfo()->getName();
+				cableText += " ";
+				cableText += "input";
+
+			} else if(inputTeleport
+			   && cw->inputPort
+			   && cw->outputPort
+			   && cw->inputPort->module == inputTeleport
+			   && cw->inputPort->portId == portWidget->portId
+			  ) {
+				// cable is incoming to the other end of the corresponding
+				// teleport input, snag the label from it
+				labelText += "\n";
+				labelText += "Teleporting from ";
+				labelText += cw->outputPort->module->model->getFullName();
+				labelText += ": ";
+				labelText += cw->outputPort->getPortInfo()->getName();
+				labelText += " ";
+				labelText += "output";
+
+			} else {
+				continue;
+			}
+
+		}
+
+		// Assemble the final tooltip text.
+		text = labelText;
+
+		if(description != "") {
+			text += "\n";
+			text += description;
+		}
+
+		if(voltageText != "") {
+			// voltageText already starts with newline
+			text += voltageText;
+		}
+
+		if(cableText != "") {
+			// cableText already starts with newline
+			text += cableText;
+		}
+
+	}
+	Tooltip::step();
+	// Position at bottom-right of parameter
+	box.pos = portWidget->getAbsoluteOffset(portWidget->box.size).round();
+	// Fit inside parent (copied from Tooltip.cpp)
+	assert(parent);
+	box = box.nudge(parent->box.zeroPos());
+};
+
+
+
 
 ////////////////////
 // module widgets //
@@ -376,7 +561,7 @@ struct TeleportOutModuleWidget : TeleportModuleWidget {
 
 		for(int i = 0; i < NUM_TELEPORT_INPUTS; i++) {
 			float y = getPortYCoord(i);
-			addOutput(createOutputCentered<PJ301MPort>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i));
+			addOutput(createOutputCentered<TeleportOutPortWidget>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1 + i));
 			addChild(createTinyLightForPort<GreenRedLight>(Vec(22.5, y), module, TeleportOutModule::OUTPUT_1_LIGHTG + 2*i));
 		}
 	}
